@@ -4,7 +4,7 @@ import argparse
 from .display import StdDisplay
 from .repeatfunction import RepeatFunction
 from .notifier import SectionNotifier, AlertNotifier
-from .logparser import LogParser
+from .logparser import CommonLogParser
 from . import __version__
 
 
@@ -55,7 +55,7 @@ def logmonitor(args):
                                    args['hitsinterval'], 
                                    args['hitsthreshold'])
 
-    logparser = LogParser(args['logfilepath'])
+    logparser = CommonLogParser(args['logfilepath'])
     for linedata in logparser.parsedlines():
         section_notifier.insert_data(linedata)
         alert_notifier.insert_data(linedata)
