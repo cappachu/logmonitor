@@ -1,5 +1,6 @@
 
 import datetime
+from .logparser import LINE_DATA_FIELDS
 
 class BaseNotifier(object):
     def __init__(self, display):
@@ -23,14 +24,7 @@ class SectionNotifier(BaseNotifier):
         self.section_2_hits = {}
 
     def insert_data(self, linedata):
-        # parse section 
-        host = linedata['host']
-        _, uri, _ = linedata['request'].split()
-        uri_parts = uri.split('/')
-        section = ''
-        if len(uri_parts) > 2:
-            section = uri_parts[1]
-        section = host + '/' + section
+        section = linedata[LINE_DATA_FIELDS.section]
         self.section_2_hits[section] = self.section_2_hits.get(section, 0) + 1
 
     @property
@@ -54,7 +48,7 @@ class AlertNotifier(BaseNotifier):
         self.is_alert_displayed = False
     
     def insert_data(self, linedata):
-        event_time = linedata['time']
+        event_time = linedata[LINE_DATA_FIELDS.datetime]
         # purge old data (determined by interval)
         if event_time > self._last_event_time:
             self._last_event_time = event_time
@@ -68,6 +62,7 @@ class AlertNotifier(BaseNotifier):
     @property
     def message(self):    
         message = []
+        #print 'HITS:', self.hits
         if self.hits > self.hits_threshold:
             if not self.is_alert_displayed:
                 self.is_alert_displayed = True

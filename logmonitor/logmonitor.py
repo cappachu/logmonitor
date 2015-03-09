@@ -4,9 +4,9 @@ import argparse
 from .display import StdDisplay
 from .repeatfunction import RepeatFunction
 from .notifier import SectionNotifier, AlertNotifier
-from .logparser import CommonLogParser
+# TODO Add support for parsing Common Logs - Factory constructor
+from .logparser import CommonLogParser, W3CLogParser 
 from . import __version__
-
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -55,7 +55,7 @@ def logmonitor(args):
                                    args['hitsinterval'], 
                                    args['hitsthreshold'])
 
-    logparser = CommonLogParser(args['logfilepath'])
+    logparser = W3CLogParser(args['logfilepath'])
     for linedata in logparser.parsedlines():
         section_notifier.insert_data(linedata)
         alert_notifier.insert_data(linedata)
@@ -77,7 +77,10 @@ def main():
         print "Invalid File Path:", args['logfilepath']
         return
     
-    logmonitor(args)
+    try:
+        logmonitor(args)
+    except(KeyboardInterrupt, SystemExit):
+        pass
 
 
 if __name__ == '__main__':
