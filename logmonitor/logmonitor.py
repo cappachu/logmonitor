@@ -15,13 +15,15 @@ def get_parser():
                            every sectioninterval seconds
                            and alerts are displayed if total website hits
                            are greater than hitsthreshold in the last
-                           hitsinterval seconds""")
+                           hitsinterval seconds""",
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('logfilepath', 
             help='log file path',
             nargs='?')
     parser.add_argument('-s', '--sectioninterval', 
             help='interval in seconds to display section summary',
             default = 2, type = int)
+            # TODO ASTERISK set defaults
             #default = 10, type = int)
     parser.add_argument('-i', '--hitsinterval',
             help='interval in seconds to retain total website hits',
@@ -31,6 +33,10 @@ def get_parser():
             help='hits threshold',
             default = 15, type = int)
             #default = 20, type = int)
+    parser.add_argument('-l', '--logtype',
+            help='type of log file',
+            default = 'w3c',
+            choices=['w3c', 'common'])
     parser.add_argument('-v', '--version',
             help='displays the current version of logmonitor',
             action='store_true')
@@ -54,8 +60,12 @@ def logmonitor(args):
     alert_notifier = AlertNotifier(display, 
                                    args['hitsinterval'], 
                                    args['hitsthreshold'])
+    
+    logfilepath = args['logfilepath']
+    logparser = W3CLogParser(logfilepath)
+    if args['logtype'] == 'common':
+        logparser = CommonLogParser(logfilepath)
 
-    logparser = W3CLogParser(args['logfilepath'])
     for linedata in logparser.parsedlines():
         section_notifier.insert_data(linedata)
         alert_notifier.insert_data(linedata)
