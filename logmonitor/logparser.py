@@ -5,7 +5,7 @@ import time
 import os
 from .utils import enum
 
-LINE_DATA_FIELDS = enum('section', 'bytes', 'datetime')
+LINE_DATA_FIELDS = enum('section', 'bytes', 'datetime', 'status')
 
 class LogParseError(Exception):
     """Exception raised for parse errors"""
@@ -76,12 +76,17 @@ class CommonLogParser(BaseLogParser):
         datadict = dict(zip(self.fieldnames, match.groups()))
         return self.linedata(datadict)
 
+    def parse_int(self, str_val):
+        result = 0
+        if str_val != '-':
+            result = int(str_val)
+        return result
+
     def linedata(self, datadict):
         """returns a dictionary with relevant values
         given a dictionary of fields corresponding to
         a log line"""
         linedata = {}
-        # add new computed fields 
         # NOTE ignoring time zone
         time, zone = datadict['datetime'].split()
         linedata[LINE_DATA_FIELDS.datetime] = datetime.datetime.strptime(time, "%d/%b/%Y:%H:%M:%S") 
@@ -95,11 +100,8 @@ class CommonLogParser(BaseLogParser):
             section = uri_parts[1]
         section = host + '/' + section
         linedata[LINE_DATA_FIELDS.section] = section
-        
-        if datadict['bytes'] == '-':
-            linedata[LINE_DATA_FIELDS.bytes] = 0
-        else:
-            linedata[LINE_DATA_FIELDS.bytes] = int(datadict['bytes'])
+        linedata[LINE_DATA_FIELDS.status] = self.parse_int(datadict['status'])
+        linedata[LINE_DATA_FIELDS.bytes] = self.parse_int(datadict['bytes'])
         return linedata
 
         
@@ -126,13 +128,12 @@ class W3CLogParser(BaseLogParser):
 
         return self.linedata(datadict)
     
-    def parse_bytes(self, bytesstr):
-        bytes = None
-        if bytesstr == "-":
-            return 0
-        bytes = int(bytesstr)
-        return bytes
-    
+    def parse_int(self, str_val):
+        result = 0
+        if str_val != '-':
+            result = int(str_val)
+        return result
+
     def parse_date(self, date_str):
         # Date Entry:
         # <date>  = 4<digit> "-" 2<digit> "-" 2<digit>
@@ -176,9 +177,11 @@ class W3CLogParser(BaseLogParser):
         # TODO check whether lines may have only one of date and time
         date_val = self.parse_date(datadict['date'])
         time_val = self.parse_time(datadict['time'])
-        bytes_val = self.parse_bytes(datadict.get('sc-bytes', datadict.get('bytes')))
+        status_val = self.parse_int(datadict.get('sc-status', datadict.get('status')))
+        bytes_val = self.parse_int(datadict.get('sc-bytes', datadict.get('bytes')))
         datetime_val = datetime.datetime.combine(date_val, time_val)
         linedata[LINE_DATA_FIELDS.datetime] = datetime_val
+        linedata[LINE_DATA_FIELDS.status] = status_val
         linedata[LINE_DATA_FIELDS.bytes] = bytes_val
         
         # TODO ASTERISK remove now()

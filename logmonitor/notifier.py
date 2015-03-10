@@ -3,6 +3,7 @@ import datetime
 from .logparser import LINE_DATA_FIELDS
 from .utils import enum
 
+
 MESSAGE_TYPES = enum('summary', 'alert')
 
 class Message(object):
@@ -11,6 +12,7 @@ class Message(object):
         super(Message, self).__init__()
         self.lines = lines
         self.type = type
+
 
 class BaseNotifier(object):
     def __init__(self, display):
@@ -32,17 +34,41 @@ class SummaryNotifier(BaseNotifier):
     def __init__(self, display):
         BaseNotifier.__init__(self, display)
         self.section_2_hits = {}
+        self.bytes = 0
+        self.error_code_count = 0
 
     def insert_data(self, linedata):
         section = linedata[LINE_DATA_FIELDS.section]
         self.section_2_hits[section] = self.section_2_hits.get(section, 0) + 1
+        self.bytes += linedata[LINE_DATA_FIELDS.bytes]
+        statuscode = linedata[LINE_DATA_FIELDS.status]
+        if statuscode >= 400:
+            self.error_code_count += 1
+
+    def purge_data(self):
+        self.section_2_hits = {}
+        self.error_code_count = 0
+        self.bytes = 0
 
     @property
     def message(self):
-        result = self.section_2_hits.copy()
-        self.section_2_hits = {}
-        lines = ["section stats",
-                 result]
+        # copy and purge 
+        section_2_hits = self.section_2_hits.copy()
+        error_code_count = self.error_code_count
+        bytes = self.bytes
+        self.purge_data()
+        
+        lines = ["-" * 25,
+                 "*** SUMMARY ***"]
+        if section_2_hits:
+            lines.append("Popular Sections:")
+            for section, hits in section_2_hits.items():
+                lines.append("%s : %d hits" % (section, hits))
+
+        lines.extend(['',
+                      "HTTP Error Count: %d" % error_code_count,
+                      "Total Bytes Transferred: %d" % bytes,
+                      "-" * 25])
         message = Message(lines, MESSAGE_TYPES.summary)
         return message
 
@@ -77,17 +103,17 @@ class AlertNotifier(BaseNotifier):
         if self.hits > self.hits_threshold:
             if not self.is_alert_displayed:
                 self.is_alert_displayed = True
-                lines.append(self.high_traffic_message(self.hits, self._last_event_time))
+                lines.extend(self.high_traffic_message(self.hits, self._last_event_time))
         elif self.is_alert_displayed:
             self.is_alert_displayed = False
-            lines.append(self.recovered_message(self._last_event_time))
+            lines.extend(self.recovered_message(self._last_event_time))
         message = Message(lines, MESSAGE_TYPES.alert)
         return message
 
     def high_traffic_message(self, hits, time):
-        message = "High traffic generated an alert - hits = %i, triggered at %s" % (hits, time)
-        return message
+        message_str = "High traffic generated an alert - hits = %i, triggered at %s" % (hits, time)
+        return [message_str]
 
     def recovered_message(self, time):
-        message = "alert recovered at %s" % (time)
-        return message
+        message_str = "alert recovered at %s" % (time)
+        return [message_str]
