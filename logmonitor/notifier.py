@@ -28,7 +28,7 @@ class BaseNotifier(object):
         self.display.show(self.message)
 
 
-class SectionNotifier(BaseNotifier):
+class SummaryNotifier(BaseNotifier):
     def __init__(self, display):
         BaseNotifier.__init__(self, display)
         self.section_2_hits = {}
