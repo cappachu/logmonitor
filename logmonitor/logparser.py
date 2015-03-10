@@ -7,6 +7,18 @@ from .utils import enum
 
 LINE_DATA_FIELDS = enum('section', 'bytes', 'datetime')
 
+class LogParseError(Exception):
+    """Exception raised for parse errors"""
+    def __init__(self, msg, line=None):
+        self.msg = msg
+        self.line = line
+
+    def __str__(self):
+        result = self.msg
+        if self.line is not None:
+            result = result + ", on line: %s" % self.line
+        return result
+
 class BaseLogParser(object):
     # TODO add support for rotated log files
     def __init__(self, filepath):
@@ -60,8 +72,7 @@ class CommonLogParser(BaseLogParser):
         line = line.strip()
         match = self.line_pattern.match(line.strip())
         if not match:
-            # TODO log parse error
-            return None
+            raise LogParseError("Unexpected line format", line)
         datadict = dict(zip(self.fieldnames, match.groups()))
         return self.linedata(datadict)
 
@@ -117,11 +128,9 @@ class W3CLogParser(BaseLogParser):
     
     def parse_bytes(self, bytesstr):
         bytes = None
-        try:
-            bytes = int(bytesstr)
-        except ValueError:
-            # TODO log parse error
-            bytes = 0
+        if bytesstr == "-":
+            return 0
+        bytes = int(bytesstr)
         return bytes
     
     def parse_date(self, date_str):
@@ -129,11 +138,7 @@ class W3CLogParser(BaseLogParser):
         # <date>  = 4<digit> "-" 2<digit> "-" 2<digit>
         date_val = None
         date_pattern = "%Y-%m-%d"
-        try:
-            date_val = datetime.datetime.strptime(date_str, date_pattern)
-        except ValueError:
-            # TODO log error
-            pass
+        date_val = datetime.datetime.strptime(date_str, date_pattern)
         return date_val
 
     def parse_time(self, time_str):
@@ -168,13 +173,10 @@ class W3CLogParser(BaseLogParser):
             section = uri_parts[1]
         section = host + '/' + section
         linedata[LINE_DATA_FIELDS.section] = section
-        # TODO may not have both date and time?
-        date_val = self.parse_date(datadict.get('date', ''))
-        time_val = self.parse_time(datadict.get('time', ''))
-        bytes_val = self.parse_bytes(datadict.get('sc-bytes', datadict.get('bytes', '')))
-        if date_val is None or time_val is None:
-            # TODO log parse error
-            return None
+        # TODO check whether lines may have only one of date and time
+        date_val = self.parse_date(datadict['date'])
+        time_val = self.parse_time(datadict['time'])
+        bytes_val = self.parse_bytes(datadict.get('sc-bytes', datadict.get('bytes')))
         datetime_val = datetime.datetime.combine(date_val, time_val)
         linedata[LINE_DATA_FIELDS.datetime] = datetime_val
         linedata[LINE_DATA_FIELDS.bytes] = bytes_val
@@ -184,17 +186,19 @@ class W3CLogParser(BaseLogParser):
         return linedata
 
     def find_last_field_directive(self):
-        field_directive = None
+        fieldnames = None
         # save current position
         position = self.logfile.tell()
         for line in self.readlines_reverse():
             words = line.strip().split()
             if len(words) > 0 and words[0] == "#Fields:":
-                field_directive = words[1:]
+                fieldnames = words[1:]
                 break
         # go back to saved position
         self.logfile.seek(position)
-        return field_directive
+        if fieldnames is None:
+            raise LogParseError("Unable to find Field Directive in Log File")
+        return fieldnames
     
     def readlines_reverse(self):
         """Generator that yields lines from a file in reverse"""
