@@ -1,6 +1,16 @@
 
 import datetime
 from .logparser import LINE_DATA_FIELDS
+from .utils import enum
+
+MESSAGE_TYPES = enum('summary', 'alert')
+
+class Message(object):
+    """Messages sent to Displays by Notifiers"""
+    def __init__(self, lines, type):
+        super(Message, self).__init__()
+        self.lines = lines
+        self.type = type
 
 class BaseNotifier(object):
     def __init__(self, display):
@@ -31,8 +41,9 @@ class SectionNotifier(BaseNotifier):
     def message(self):
         result = self.section_2_hits.copy()
         self.section_2_hits = {}
-        message = ["section stats", 
-                    result]
+        lines = ["section stats",
+                 result]
+        message = Message(lines, MESSAGE_TYPES.summary)
         return message
 
 
@@ -61,15 +72,16 @@ class AlertNotifier(BaseNotifier):
 
     @property
     def message(self):    
-        message = []
+        lines = []
         #print 'HITS:', self.hits
         if self.hits > self.hits_threshold:
             if not self.is_alert_displayed:
                 self.is_alert_displayed = True
-                message.append(self.high_traffic_message(self.hits, self._last_event_time))
+                lines.append(self.high_traffic_message(self.hits, self._last_event_time))
         elif self.is_alert_displayed:
             self.is_alert_displayed = False
-            return message.append(self.recovered_message(self._last_event_time))
+            lines.append(self.recovered_message(self._last_event_time))
+        message = Message(lines, MESSAGE_TYPES.alert)
         return message
 
     def high_traffic_message(self, hits, time):

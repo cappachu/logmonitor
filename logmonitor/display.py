@@ -18,6 +18,8 @@ class StdDisplay(BaseDisplay):
 
     def show(self, message):
         with self.lock:
-            if message:
-                for line in message:
-                    print line
+            for line in message.lines:
+                print line
+
+class CursesDisplay(BaseDisplay):
+    pass
