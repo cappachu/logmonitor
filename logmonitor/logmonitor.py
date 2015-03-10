@@ -35,7 +35,7 @@ def get_parser():
             #default = 20, type = int)
     parser.add_argument('-l', '--logtype',
             help='type of log file',
-            default = 'w3c',
+            default = 'common',
             choices=['w3c', 'common'])
     parser.add_argument('-v', '--version',
             help='displays the current version of logmonitor',
