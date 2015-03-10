@@ -1,5 +1,7 @@
 
 from threading import Lock 
+from clint.textui import puts, colored
+from .notifier import MESSAGE_TYPES
 
 class BaseDisplay(object):
     def __init__(self):
@@ -7,7 +9,7 @@ class BaseDisplay(object):
     
     def show(self, message):
         """Override this method to display message.
-        A messge is a list of text lines"""
+        A message is a list of text lines"""
         raise NotImplementedError(self.__class__.__name__ + '.show')
 
 
@@ -18,8 +20,12 @@ class StdDisplay(BaseDisplay):
 
     def show(self, message):
         with self.lock:
-            for line in message.lines:
-                print line
+            if message.type == MESSAGE_TYPES.summary:
+                for line in message.lines:
+                    puts(line)
+            elif message.type == MESSAGE_TYPES.alert:
+                for line in message.lines:
+                    puts(colored.red(line))
 
 class CursesDisplay(BaseDisplay):
     pass
