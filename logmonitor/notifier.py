@@ -59,16 +59,17 @@ class SummaryNotifier(BaseNotifier):
         self.purge_data()
         
         lines = ["-" * 25,
-                 "*** SUMMARY ***"]
+                 "*** SUMMARY ***",
+                 "",
+                 "Total Kilobytes Transferred: %d" % (bytes/1024),
+                 "HTTP Errors: %d" % error_code_count,
+                 ""
+                 ]
         if section_2_hits:
             lines.append("Popular Sections:")
             for section, hits in section_2_hits.items():
                 lines.append("%s : %d hits" % (section, hits))
-
-        lines.extend(['',
-                      "HTTP Error Count: %d" % error_code_count,
-                      "Total Bytes Transferred: %d" % bytes,
-                      "-" * 25])
+        lines.append("-" * 25)
         message = Message(lines, MESSAGE_TYPES.summary)
         return message
 
