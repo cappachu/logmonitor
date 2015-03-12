@@ -12,7 +12,7 @@ from . import __version__
 
 def get_parser():
     parser = argparse.ArgumentParser(
-            description="""logmonitor monitors a w3c log file:
+            description="""logmonitor monitors a http log file:
                            a summary of website traffic is displayed
                            every summaryinterval seconds
                            and alerts are displayed if total website hits
