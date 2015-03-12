@@ -31,14 +31,14 @@ class RepeatFunctionThread(Thread):
     def run(self):
         next_call = time.time()
         while not self._terminate.isSet():
-            next_call = next_call + self.interval;
-            self._terminate.wait(next_call - time.time())
             try:
                 self.function(*self.args,**self.kwargs)
             except Exception as e:
                 # any exceptions raised by the function are put in a queue
                 error = RepeatFunctionThreadError(traceback.format_exc())
                 self._exceptionqueue.put(error)
+            next_call = next_call + self.interval;
+            self._terminate.wait(next_call - time.time())
 
     def raise_any_exceptions(self):
         """Can be used by parent thread to capture any 
