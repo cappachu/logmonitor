@@ -18,7 +18,6 @@ setup(
     },
     install_requires=[
         'argparse',
-        'pytest',
         'clint',
     ],
 )
