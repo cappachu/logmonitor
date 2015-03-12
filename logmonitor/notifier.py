@@ -86,41 +86,40 @@ class AlertNotifier(BaseNotifier):
         BaseNotifier.__init__(self, display)
         self._interval = datetime.timedelta(seconds=interval)
         self.hits_threshold = hits_threshold
-        # time of last event inserted
-        self._last_event_time = datetime.datetime.now()
         self._time_2_hits = {}
         self.hits = 0
         self.is_alert_displayed = False
-    
-    def insert_data(self, linedata):
-        event_time = linedata[LINE_DATA_FIELDS.datetime]
+
+    def purge_old_data(self, event_time):
         # purge old data (determined by interval)
-        if event_time > self._last_event_time:
-            self._last_event_time = event_time
-            for time, hits in self._time_2_hits.items():
-                if time + self._interval < event_time:
-                    self.hits -= hits
-                    del self._time_2_hits[time]
+        for time, hits in self._time_2_hits.items():
+            if time + self._interval < event_time:
+                self.hits -= hits
+                del self._time_2_hits[time]
+
+    def insert_data(self, linedata):
         # insert current event
+        event_time = linedata[LINE_DATA_FIELDS.datetime]
         self._time_2_hits[event_time] = self._time_2_hits.get(event_time, 0) + 1
         self.hits += 1
         self.notify()
-        
 
     @property
     def message(self):    
         """Display a messages when hits threshold is crossed
         and when hits subsequently drops below threshold (recovers)."""
+        # purge old data
+        now = datetime.datetime.now().replace(microsecond=0)
+        self.purge_old_data(now)
+        # create message if necessary
         lines = []
-        #print 'HITS:', self.hits
-        #print 'last event time:', self._last_event_time
         if self.hits > self.hits_threshold:
             if not self.is_alert_displayed:
                 self.is_alert_displayed = True
-                lines.extend(self.high_traffic_message(self.hits, self._last_event_time))
+                lines.extend(self.high_traffic_message(self.hits, now))
         elif self.is_alert_displayed:
             self.is_alert_displayed = False
-            lines.extend(self.recovered_message(self._last_event_time))
+            lines.extend(self.recovered_message(now))
         message = Message(lines, MESSAGE_TYPES.alert)
         return message
 

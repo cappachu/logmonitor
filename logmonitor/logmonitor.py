@@ -55,9 +55,12 @@ def logmonitor(args, display):
     summary_notifier_repeater.start()
 
     # setup alert notifier
-    alert_notifier = AlertNotifier(display, 
-                                   args['hitsinterval'], 
-                                   args['hitsthreshold'])
+    alert_notifier = AlertNotifier(display, args['hitsinterval'], args['hitsthreshold'])
+    # repeatedly call notify method of alert_notifier every second
+    alert_notifier_repeater = RepeatFunctionThread(1, alert_notifier.notify)
+    alert_notifier_repeater.setDaemon(True)
+    alert_notifier_repeater.start()
+
     
     logfilepath = args['logfilepath']
     logparser = None
@@ -69,6 +72,7 @@ def logmonitor(args, display):
     for linedata in logparser.parsedlines():
         summary_notifier_repeater.raise_any_exceptions()
         summary_notifier.insert_data(linedata)
+        alert_notifier_repeater.raise_any_exceptions()
         alert_notifier.insert_data(linedata)
 
 
@@ -103,6 +107,8 @@ def main():
         try:
             curses.wrapper(run_with_windowdisplay, args)
         except RepeatFunctionThreadError as e:
+            # print any exceptions raised by thread after
+            # curses wrapper has reset terminal
             print e
         except(KeyboardInterrupt, SystemExit):
             sys.exit(0)
