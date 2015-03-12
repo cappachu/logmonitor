@@ -96,11 +96,14 @@ class AlertNotifier(BaseNotifier):
                     del self._time_2_hits[time]
         self._time_2_hits[event_time] = self._time_2_hits.get(event_time, 0) + 1
         self.hits += 1
+        self.notify()
+        
 
     @property
     def message(self):    
         lines = []
         #print 'HITS:', self.hits
+        #print 'last event time:', self._last_event_time
         if self.hits > self.hits_threshold:
             if not self.is_alert_displayed:
                 self.is_alert_displayed = True

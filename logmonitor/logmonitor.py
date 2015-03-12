@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 import os
 import argparse
@@ -71,7 +73,6 @@ def logmonitor(args, display):
         summary_notifier_repeater.raise_any_exceptions()
         summary_notifier.insert_data(linedata)
         alert_notifier.insert_data(linedata)
-        alert_notifier.notify()
 
 
 def run_with_windowdisplay(win, args):
