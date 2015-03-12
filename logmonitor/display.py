@@ -5,6 +5,7 @@ from .notifier import MESSAGE_TYPES
 import curses
 
 class BaseDisplay(object):
+    """Base class for text output"""
     def __init__(self):
         super(BaseDisplay, self).__init__()
     
@@ -15,6 +16,7 @@ class BaseDisplay(object):
 
 
 class StdDisplay(BaseDisplay):
+    """Standard Display for text output"""
     def __init__(self):
         BaseDisplay.__init__(self)
         self.lock = Lock()
@@ -30,6 +32,7 @@ class StdDisplay(BaseDisplay):
 
 
 class WindowDisplay(BaseDisplay):
+    """Displays text in windows using curses"""
     def __init__(self, window):
         BaseDisplay.__init__(self)
         self._window = window
@@ -51,6 +54,7 @@ class WindowDisplay(BaseDisplay):
                 self.right_subwindow.refresh()
 
     def _setup_gui(self):
+        """Setup left and right curses windows"""
         curses.curs_set(0)
         height, width = self._window.getmaxyx()
         self.left_subwindow = curses.newwin(height, width/3, 0, 0)
@@ -61,8 +65,8 @@ class WindowDisplay(BaseDisplay):
         self.right_subwindow.refresh()
     
     def line_2_sublines(self, line, window_width):
-        """splits a text line into pieces that fit 
-        in the width of the window"""
+        """Splits a text line into pieces that fit 
+        in the width of a window"""
         sublines = [line]
         if len(line) > window_width:
             first = line[0:window_width - 1] + "\n"
@@ -75,7 +79,7 @@ class WindowDisplay(BaseDisplay):
 
     
     def write_line(self, line, subwindow):
-        """write line to subwindow, splitting line into sublines
+        """Write line to subwindow, splitting line into sublines
         that fit in the subwindow if necessary"""
         height, width = subwindow.getmaxyx()
         window_width = width - 2
@@ -85,6 +89,7 @@ class WindowDisplay(BaseDisplay):
         for subline in self.line_2_sublines(line, window_width):
             y, x = subwindow.getyx()
             if y >= height - 1:
+                # scroll up when window is full
                 subwindow.move(1, 1)
                 subwindow.deleteln()
                 subwindow.move(y - 1, 1)

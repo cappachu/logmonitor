@@ -9,7 +9,6 @@ setup(
     version=logmonitor.__version__,
     description='Monitors a w3c log file',
     author='Codanda B. Appachu',
-    author_email='mtamrf@gmail.com',
     url='https://github.com/mtamrf/logmonitor',
     entry_points={
         'console_scripts': [

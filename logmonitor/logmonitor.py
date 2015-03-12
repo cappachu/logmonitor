@@ -24,17 +24,13 @@ def get_parser():
             nargs='?')
     parser.add_argument('-s', '--summaryinterval', 
             help='interval in seconds to display summary',
-            default = 2, type = int)
-            # TODO ASTERISK set defaults
-            #default = 10, type = int)
+            default = 10, type = int)
     parser.add_argument('-i', '--hitsinterval',
             help='interval in seconds to retain total website hits',
-            default = 10, type = int)
-            #default = 120, type = int)
+            default = 120, type = int)
     parser.add_argument('-t', '--hitsthreshold',
             help='hits threshold',
-            default = 15, type = int)
-            #default = 20, type = int)
+            default = 20, type = int)
     parser.add_argument('-l', '--logtype',
             help='type of log file',
             default = 'common',
@@ -50,14 +46,15 @@ def get_parser():
 
 
 def logmonitor(args, display):
+    # setup summary notifier
     summary_notifier = SummaryNotifier(display)
-    # repeatedly call notify method of summary_notifier 
-    # every summary_interval seconds
+    # repeatedly call notify method of summary_notifier every summary_interval seconds
     summary_notifier_repeater = RepeatFunctionThread(args['summaryinterval'], 
                                                      summary_notifier.notify)
     summary_notifier_repeater.setDaemon(True)
     summary_notifier_repeater.start()
 
+    # setup alert notifier
     alert_notifier = AlertNotifier(display, 
                                    args['hitsinterval'], 
                                    args['hitsthreshold'])

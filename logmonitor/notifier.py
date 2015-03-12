@@ -15,6 +15,8 @@ class Message(object):
 
 
 class BaseNotifier(object):
+    """Base class for notifiers, responsible for sending
+    messages to displays"""
     def __init__(self, display):
         super(BaseNotifier, self).__init__()
         self.display = display
@@ -31,6 +33,8 @@ class BaseNotifier(object):
 
 
 class SummaryNotifier(BaseNotifier):
+    """Responsible for collecting information about popular
+    website sections and summary stats and forwarding them to display"""
     def __init__(self, display):
         BaseNotifier.__init__(self, display)
         self.section_2_hits = {}
@@ -42,6 +46,7 @@ class SummaryNotifier(BaseNotifier):
         self.section_2_hits[section] = self.section_2_hits.get(section, 0) + 1
         self.bytes += linedata[LINE_DATA_FIELDS.bytes]
         statuscode = linedata[LINE_DATA_FIELDS.status]
+        # 400 and above status codes are errors 
         if statuscode >= 400:
             self.error_code_count += 1
 
@@ -52,7 +57,7 @@ class SummaryNotifier(BaseNotifier):
 
     @property
     def message(self):
-        # copy and purge 
+        # copy data (to return) and purge 
         section_2_hits = self.section_2_hits.copy()
         error_code_count = self.error_code_count
         bytes = self.bytes
@@ -75,6 +80,8 @@ class SummaryNotifier(BaseNotifier):
 
 
 class AlertNotifier(BaseNotifier):
+    """Responsible for determining when website hits cross
+    a specified threshold and forwarding information to a display"""
     def __init__(self, display, interval, hits_threshold):
         BaseNotifier.__init__(self, display)
         self._interval = datetime.timedelta(seconds=interval)
@@ -94,6 +101,7 @@ class AlertNotifier(BaseNotifier):
                 if time + self._interval < event_time:
                     self.hits -= hits
                     del self._time_2_hits[time]
+        # insert current event
         self._time_2_hits[event_time] = self._time_2_hits.get(event_time, 0) + 1
         self.hits += 1
         self.notify()
@@ -101,6 +109,8 @@ class AlertNotifier(BaseNotifier):
 
     @property
     def message(self):    
+        """Display a messages when hits threshold is crossed
+        and when hits subsequently drops below threshold (recovers)."""
         lines = []
         #print 'HITS:', self.hits
         #print 'last event time:', self._last_event_time

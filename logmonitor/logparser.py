@@ -5,6 +5,7 @@ import time
 import os
 from .utils import enum
 
+# Fields of a line used for metrics and stats
 LINE_DATA_FIELDS = enum('section', 'bytes', 'datetime', 'status')
 
 class LogParseError(Exception):
@@ -20,6 +21,7 @@ class LogParseError(Exception):
         return result
 
 class BaseLogParser(object):
+    """Base class for following and parsing a text file"""
     # TODO add support for rotated log files
     def __init__(self, filepath):
         super(BaseLogParser, self).__init__()
@@ -39,7 +41,6 @@ class BaseLogParser(object):
     def parsedlines(self):
         """Tails common log format file and yields dictionaries 
         corresponding to log lines"""
-
         if self.logfile is None:
             # open file in universal newline mode
             self.logfile = open(self.filepath, "rU")
@@ -60,6 +61,7 @@ class BaseLogParser(object):
 
 
 class CommonLogParser(BaseLogParser):
+    """Follows and Parses Common Log Format files"""
     def __init__(self, filepath):
         BaseLogParser.__init__(self, filepath)
         self.fieldnames = ['host', 'referrer', 
@@ -90,7 +92,6 @@ class CommonLogParser(BaseLogParser):
         # NOTE ignoring time zone
         time, zone = datadict['datetime'].split()
         linedata[LINE_DATA_FIELDS.datetime] = datetime.datetime.strptime(time, "%d/%b/%Y:%H:%M:%S") 
-
         # parse section 
         host = datadict['host']
         _, uri, _ = datadict['request'].split()
@@ -106,6 +107,7 @@ class CommonLogParser(BaseLogParser):
 
         
 class W3CLogParser(BaseLogParser):
+    """Follows and Parses W3C Extended Log Format files"""
     def __init__(self, filepath):
         BaseLogParser.__init__(self, filepath)
         self.fieldnames = None
@@ -117,6 +119,7 @@ class W3CLogParser(BaseLogParser):
             self.fieldnames = self.find_last_field_directive()
         words = line.strip().split()
         if len(words) > 0:
+            # Field directive lines
             if words[0] == "#Fields:":
                 self.fieldnames = words[1:]
             # convert entity lines to dictionaries
@@ -183,12 +186,10 @@ class W3CLogParser(BaseLogParser):
         linedata[LINE_DATA_FIELDS.datetime] = datetime_val
         linedata[LINE_DATA_FIELDS.status] = status_val
         linedata[LINE_DATA_FIELDS.bytes] = bytes_val
-        
-        # TODO ASTERISK remove now()
-        #linedata[LINE_DATA_FIELDS.datetime] = datetime.datetime.now() 
         return linedata
 
     def find_last_field_directive(self):
+        """Traverses the file in reverse finding last Field directive"""
         fieldnames = None
         # save current position
         position = self.logfile.tell()
