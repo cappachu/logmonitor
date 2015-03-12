@@ -200,8 +200,6 @@ class W3CLogParser(BaseLogParser):
                 break
         # go back to saved position
         self.logfile.seek(position)
-        if fieldnames is None:
-            raise LogParseError("Unable to find Field Directive in Log File")
         return fieldnames
     
     def readlines_reverse(self):
