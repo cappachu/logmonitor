@@ -27,6 +27,7 @@ Usage
 -----
 
 ::
+
     usage: logmonitor.py [-h] [-s SUMMARYINTERVAL] [-i HITSINTERVAL]
                          [-t HITSTHRESHOLD] [-l {w3c,common}]
                          [-d {window,standard}] [-v]
