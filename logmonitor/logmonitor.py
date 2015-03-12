@@ -5,7 +5,7 @@ import os
 import argparse
 import curses
 from .display import StdDisplay, WindowDisplay
-from .repeatfunction import RepeatFunctionThread, RepeatFunctionThreadError
+from .repeatfunctionthread import RepeatFunctionThread, RepeatFunctionThreadError
 from .notifier import SummaryNotifier, AlertNotifier
 from .logparser import CommonLogParser, W3CLogParser 
 from . import __version__
