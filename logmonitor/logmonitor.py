@@ -5,7 +5,7 @@ import os
 import argparse
 import curses
 from .display import StdDisplay, WindowDisplay
-from .repeatfunctionthread import RepeatFunctionThread, RepeatFunctionThreadError
+from .repeatfunctionthread import RepeatFunctionThreadError
 from .notifier import SummaryNotifier, AlertNotifier
 from .logparser import CommonLogParser, W3CLogParser 
 from . import __version__
@@ -47,19 +47,14 @@ def get_parser():
 
 def logmonitor(args, display):
     # setup summary notifier
-    summary_notifier = SummaryNotifier(display)
     # repeatedly call notify method of summary_notifier every summary_interval seconds
-    summary_notifier_repeater = RepeatFunctionThread(args['summaryinterval'], 
-                                                     summary_notifier.notify)
-    summary_notifier_repeater.setDaemon(True)
-    summary_notifier_repeater.start()
+    summary_notifier = SummaryNotifier(display, args['summaryinterval'])
+    summary_notifier.start()
 
     # setup alert notifier
-    alert_notifier = AlertNotifier(display, args['hitsinterval'], args['hitsthreshold'])
     # repeatedly call notify method of alert_notifier every second
-    alert_notifier_repeater = RepeatFunctionThread(1, alert_notifier.notify)
-    alert_notifier_repeater.setDaemon(True)
-    alert_notifier_repeater.start()
+    alert_notifier = AlertNotifier(display, 1, args['hitsinterval'], args['hitsthreshold'])
+    alert_notifier.start()
 
     
     logfilepath = args['logfilepath']
@@ -70,9 +65,7 @@ def logmonitor(args, display):
         logparser = W3CLogParser(logfilepath)
 
     for linedata in logparser.parsedlines():
-        summary_notifier_repeater.raise_any_exceptions()
         summary_notifier.insert_data(linedata)
-        alert_notifier_repeater.raise_any_exceptions()
         alert_notifier.insert_data(linedata)
 
 

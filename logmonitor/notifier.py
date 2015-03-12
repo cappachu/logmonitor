@@ -2,6 +2,7 @@
 import datetime
 from .logparser import LINE_DATA_FIELDS
 from .utils import enum
+from .repeatfunctionthread import RepeatFunctionThread 
 
 
 MESSAGE_TYPES = enum('summary', 'alert')
@@ -15,33 +16,45 @@ class Message(object):
 
 
 class BaseNotifier(object):
-    """Base class for notifiers, responsible for sending
-    messages to displays"""
-    def __init__(self, display):
+    """Base class for notifiers calls notify method every
+    interval seconds"""
+    def __init__(self, display, notify_interval):
         super(BaseNotifier, self).__init__()
         self.display = display
+        self.repeater_thread = RepeatFunctionThread(notify_interval, self.notify)
+        self.repeater_thread.setDaemon(True)
+
+    def start(self):
+        self.repeater_thread.start()
+
+    def stop(self):
+        self.repeater_thread.stop()
 
     def insert_data(self, data):
-        raise NotImplementedError(self.__class__.__name__ + '.insert_data')
+        """Compute stats with data. Remember to call Parent method """
+        self.repeater_thread.raise_any_exceptions()
     
-    @property
     def message(self):
+        """Message to display, overriden by child classes"""
         raise NotImplementedError(self.__class__.__name__ + '.message')
 
     def notify(self): 
-        self.display.show(self.message)
+        message = self.message()
+        if self.display is not None:
+            self.display.show(message)
 
 
 class SummaryNotifier(BaseNotifier):
     """Responsible for collecting information about popular
-    website sections and summary stats and forwarding them to display"""
-    def __init__(self, display):
-        BaseNotifier.__init__(self, display)
+    website sections and summary stats"""
+    def __init__(self, display, notify_interval):
+        BaseNotifier.__init__(self, display, notify_interval)
         self.section_2_hits = {}
         self.bytes = 0
         self.error_code_count = 0
 
     def insert_data(self, linedata):
+        super(SummaryNotifier, self).insert_data(linedata)
         section = linedata[LINE_DATA_FIELDS.section]
         self.section_2_hits[section] = self.section_2_hits.get(section, 0) + 1
         self.bytes += linedata[LINE_DATA_FIELDS.bytes]
@@ -55,7 +68,6 @@ class SummaryNotifier(BaseNotifier):
         self.error_code_count = 0
         self.bytes = 0
 
-    @property
     def message(self):
         # copy data (to return) and purge 
         section_2_hits = self.section_2_hits.copy()
@@ -81,10 +93,10 @@ class SummaryNotifier(BaseNotifier):
 
 class AlertNotifier(BaseNotifier):
     """Responsible for determining when website hits cross
-    a specified threshold and forwarding information to a display"""
-    def __init__(self, display, interval, hits_threshold):
-        BaseNotifier.__init__(self, display)
-        self._interval = datetime.timedelta(seconds=interval)
+    a specified threshold"""
+    def __init__(self, display, notify_interval, hits_interval, hits_threshold):
+        BaseNotifier.__init__(self, display, notify_interval)
+        self.hits_interval = datetime.timedelta(seconds=hits_interval)
         self.hits_threshold = hits_threshold
         self._time_2_hits = {}
         self.hits = 0
@@ -93,18 +105,18 @@ class AlertNotifier(BaseNotifier):
     def purge_old_data(self, event_time):
         # purge old data (determined by interval)
         for time, hits in self._time_2_hits.items():
-            if time + self._interval < event_time:
+            if time + self.hits_interval < event_time:
                 self.hits -= hits
                 del self._time_2_hits[time]
 
     def insert_data(self, linedata):
+        super(AlertNotifier, self).insert_data(linedata)
         # insert current event
         event_time = linedata[LINE_DATA_FIELDS.datetime]
         self._time_2_hits[event_time] = self._time_2_hits.get(event_time, 0) + 1
         self.hits += 1
         self.notify()
 
-    @property
     def message(self):    
         """Display a messages when hits threshold is crossed
         and when hits subsequently drops below threshold (recovers)."""

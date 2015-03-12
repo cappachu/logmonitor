@@ -5,9 +5,7 @@ import time
 import datetime
 import random
 from logmonitor.notifier import AlertNotifier
-from logmonitor.display import StdDisplay
 from logmonitor.logparser import CommonLogParser, LINE_DATA_FIELDS
-from logmonitor.repeatfunctionthread import RepeatFunctionThread, RepeatFunctionThreadError
 
 class AlertingLogicTestCase(unittest.TestCase):
     def setUp(self):
@@ -17,15 +15,13 @@ class AlertingLogicTestCase(unittest.TestCase):
         self.OVER_THRESHOLD = self.HITS_THRESHOLD + 1
         self.UNDER_THRESHOLD = self.HITS_THRESHOLD - 1
         self.common_log_parser = CommonLogParser('')
-        self.display = StdDisplay()
+        self.display = None
         self.last_event_time = None
-        self.alert_notifier = AlertNotifier(self.display, self.HITS_INTERVAL, self.HITS_THRESHOLD)
-        self.alert_notifier_repeater = RepeatFunctionThread(1, self.alert_notifier.notify)
-        self.alert_notifier_repeater.setDaemon(True)
-        self.alert_notifier_repeater.start()
+        self.alert_notifier = AlertNotifier(self.display, 1, self.HITS_INTERVAL, self.HITS_THRESHOLD)
+        self.alert_notifier.start()
         
     def tearDown(self):
-        self.alert_notifier_repeater.stop() 
+        self.alert_notifier.stop() 
 
     def create_log_line(self):
         logline_template = 'www.somedomain.com - - %s "GET /section/page.html HTTP/1.0" 200 969'
