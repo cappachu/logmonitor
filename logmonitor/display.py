@@ -42,9 +42,10 @@ class WindowDisplay(BaseDisplay):
     def show(self, message):
         with self.lock:
             if message.type == MESSAGE_TYPES.summary:
+                # clear subwindow
                 self.left_subwindow.erase()
                 for line in message.lines:
-                    self.write_line(line+'\n', self.left_subwindow)
+                    self.write_line(line+'\n', self.left_subwindow, scroll=False)
                 self.left_subwindow.border()
                 self.left_subwindow.refresh()
             elif message.type == MESSAGE_TYPES.alert:
@@ -78,7 +79,7 @@ class WindowDisplay(BaseDisplay):
         return sublines
 
     
-    def write_line(self, line, subwindow):
+    def write_line(self, line, subwindow, scroll=True):
         """Write line to subwindow, splitting line into sublines
         that fit in the subwindow if necessary"""
         height, width = subwindow.getmaxyx()
@@ -88,6 +89,9 @@ class WindowDisplay(BaseDisplay):
             subwindow.move(1,0)
         for subline in self.line_2_sublines(line, window_width):
             y, x = subwindow.getyx()
+            # stop if scrolling is disabled and window is full
+            if y >= height - 1 and not scroll:
+                return
             if y >= height - 1:
                 # scroll up when window is full
                 subwindow.move(1, 1)
