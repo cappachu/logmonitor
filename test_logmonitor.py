@@ -31,13 +31,13 @@ class AlertingLogicTestCase(unittest.TestCase):
         return logline
 
     def simulate_line(self):
-        """feeds alert notifier with a parsed line with specified time"""
+        """feeds alert notifier with a parsed log line"""
         line = self.create_log_line()
         linedata = self.common_log_parser.parse_line(line)
         self.alert_notifier.insert_data(linedata)
 
     def simulate_lines(self, time_period, num_lines):
-        """feeds num_lines lines to alert notifier with times ranging from start_time to end_time"""
+        """feeds num_lines lines to alert notifier within a specified time period """
         if num_lines > 0:
             time_period_seconds = time_period.total_seconds()
             next_call = time.time()
