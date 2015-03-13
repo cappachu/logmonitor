@@ -81,6 +81,12 @@ display help
     $ logmonitor -h
 
 
+Testing 
+-------
+A test for the alerting logic can be found in the file test_logmonitor.py.
+
+The logsim.py script from David Beazley's website <http://www.dabeaz.com/coroutines/logsim.py> can be used to simulate an actively written http log file. 
+
 
 Application Design Thoughts
 ---------------------------
