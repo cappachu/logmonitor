@@ -4,10 +4,6 @@ logmonitor: a http log monitor
 
 logmonitor monitors a http log file repeatedly displaying summaries of website traffic and alerts when traffic crosses beyond a specified threshold. It currently supports both the common log format as well as the w3c extended log format. 
 
-::
-
-    $ logmonitor access-log 
-
 
 Installation
 ------------
@@ -55,6 +51,35 @@ Usage
                             type of display (default: window)
       -v, --version         displays the current version of logmonitor (default:
                             False)
+
+Usage Examples
+--------------
+
+monitor log file "access-log" (common log format)
+
+::
+
+    $ logmonitor access-log 
+
+monitor file "access-log" printing a summary every 2 seconds and displaying an alert if hits are greater than 20 in the last 10 seconds
+
+::
+
+    $ logmonitor --summaryinterval 2 --hitsthreshold 20 --hitsinterval 10 access-log 
+
+or alternatively,
+
+
+::
+
+    $ logmonitor -s 2 -t 20 -i 10 access-log 
+
+display help
+
+::
+
+    $ logmonitor -h
+
 
 
 Application Design Thoughts
