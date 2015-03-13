@@ -54,29 +54,29 @@ class AlertingLogicTestCase(unittest.TestCase):
     def test_alert(self):
         time_period = datetime.timedelta(seconds=self.HITS_INTERVAL)
         self.simulate_lines(time_period, self.OVER_THRESHOLD)
-        assert self.alert_notifier.is_alert_displayed == True
+        self.assertTrue(self.alert_notifier.is_alert_displayed)
 
     def test_do_not_alert(self):
         time_period = datetime.timedelta(seconds=self.HITS_INTERVAL)
         self.simulate_lines(time_period, self.UNDER_THRESHOLD)
-        assert self.alert_notifier.is_alert_displayed == False
+        self.assertFalse(self.alert_notifier.is_alert_displayed)
 
     def test_recover(self):
         time_period = datetime.timedelta(seconds=self.HITS_INTERVAL)
         self.simulate_lines(time_period, self.OVER_THRESHOLD)
-        assert self.alert_notifier.is_alert_displayed == True
+        self.assertTrue(self.alert_notifier.is_alert_displayed)
         # wait till last event time + interval
         sleep_time = self.last_event_time + self.OVER_HITS_INTERVAL
         time.sleep(self.last_event_time + self.OVER_HITS_INTERVAL - time.time())
-        assert self.alert_notifier.is_alert_displayed == False
+        self.assertFalse(self.alert_notifier.is_alert_displayed)
 
     def test_do_not_recover(self):
         time_period = datetime.timedelta(seconds=self.HITS_INTERVAL)
         self.simulate_lines(time_period, self.OVER_THRESHOLD)
-        assert self.alert_notifier.is_alert_displayed == True
+        self.assertTrue(self.alert_notifier.is_alert_displayed)
         time_period = datetime.timedelta(seconds=self.HITS_INTERVAL)
         self.simulate_lines(time_period, self.OVER_THRESHOLD)
-        assert self.alert_notifier.is_alert_displayed == True
+        self.assertTrue(self.alert_notifier.is_alert_displayed)
         
 
 if __name__ == '__main__':
