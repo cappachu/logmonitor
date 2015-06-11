@@ -10,7 +10,7 @@ Installation
 
 ::
 
-    pip install git+https://github.com/mtamrf/logmonitor.git
+    pip install git+https://github.com/cappachu/logmonitor.git
 
 or
 
